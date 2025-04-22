@@ -10,4 +10,9 @@
   }
 }
 
-// app global css in SCSS form
+// number input
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin-left: 10px;
+}
