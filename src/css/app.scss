@@ -8,6 +8,11 @@
       transition: opacity 0.3s ease;
     }
   }
+
+  .q-item:hover {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
 }
 
 // number input
@@ -15,4 +20,9 @@ input::-webkit-inner-spin-button,
 input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin-left: 10px;
+}
+
+//auth page
+.auth {
+  min-width: 320px;
 }

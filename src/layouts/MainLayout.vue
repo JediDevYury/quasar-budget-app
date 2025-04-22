@@ -4,10 +4,7 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title class="absolute-center">
-          <q-icon name="account_balance" />
-          Money App
-        </q-toolbar-title>
+        <ToolbarTitle />
 
         <div>Quasar v{{ $q.version }}</div>
       </q-toolbar>
@@ -25,6 +22,19 @@
         <q-item-label class="text-white" header> Navigation </q-item-label>
 
         <NavLink v-for="link in navLinks" :key="link.title" v-bind="link" />
+        <q-separator spaced />
+
+        <q-item to="/auth" @click="authStore.logout()" clickable class="text-white" tag="a">
+          <q-item-section avatar>
+            <q-icon name="logout" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Log out</q-item-label>
+            <q-item-label v-if="authStore.userDetails.email" class="text-white" caption>{{
+              authStore.userDetails.email
+            }}</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -37,6 +47,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import NavLink, { type NavLinkProps } from 'components/Nav/NavLink.vue';
+import ToolbarTitle from 'components/Layout/ToolbarTitle.vue';
+import { useAuthStore } from 'stores/auth-store';
+
+const authStore = useAuthStore();
 
 const navLinks: NavLinkProps[] = [
   {
