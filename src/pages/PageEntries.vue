@@ -22,13 +22,20 @@
           {{ useCurrencify(balance) }}
         </div>
       </div>
-      <div class="row q-px-sm q-pb-sm q-col-gutter-sm">
+      <q-form @submit="addEntry" class="row q-px-sm q-pb-sm q-col-gutter-sm">
         <div class="col">
-          <q-input v-model="name" bg-color="white" placeholder="Name" outlined dense />
+          <q-input
+            ref="nameRef"
+            v-model="addEntryForm.name"
+            bg-color="white"
+            placeholder="Name"
+            outlined
+            dense
+          />
         </div>
         <div class="col">
           <q-input
-            v-model="amount"
+            v-model.number="addEntryForm.amount"
             input-class="text-right"
             bg-color="white"
             placeholder="Amount"
@@ -39,22 +46,20 @@
           />
         </div>
         <div class="col col-auto">
-          <q-btn icon="add" color="primary" round />
+          <q-btn type="submit" icon="add" color="primary" round />
         </div>
-      </div>
+      </q-form>
     </q-footer>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import { useCurrencify } from 'src/use/useCurrencify';
 import { useAmountColorClass } from 'src/use/useAmountColorClass';
+import { uid } from 'quasar';
 
-const name = ref('');
-const amount = ref(0);
-
-const entries = ref([
+const entries = ref<{ id: string; name: string; amount: number }[]>([
   { id: 'id1', name: 'Salary', amount: 4999.99 },
   { id: 'id2', name: 'Rent', amount: -999 },
   { id: 'id3', name: 'Phone', amount: -14.99 },
@@ -64,4 +69,30 @@ const entries = ref([
 const balance = computed(() => {
   return entries.value.reduce((acc, { amount }) => acc + amount, 0);
 });
+
+//add entry
+
+const nameRef = ref<HTMLInputElement | null>(null);
+
+const defaultAddEntryForm = {
+  name: '',
+  amount: null,
+};
+
+const addEntryForm = reactive<{
+  name: string;
+  amount: number | null;
+}>({ ...defaultAddEntryForm });
+
+const clearAddEntryForm = () => {
+  Object.assign(addEntryForm, defaultAddEntryForm);
+  nameRef.value?.focus();
+};
+
+const addEntry = () => {
+  const newEntry = Object.assign({}, addEntryForm, { id: uid(), amount: addEntryForm.amount ?? 0 });
+
+  entries.value.push(newEntry);
+  clearAddEntryForm();
+};
 </script>
