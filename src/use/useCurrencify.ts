@@ -1,5 +1,5 @@
 export function useCurrencify(amount: number) {
-  let posNegSign;
+  let posNegSign: string;
   if (amount > 0) {
     posNegSign = '+';
   } else if (amount < 0) {

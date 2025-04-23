@@ -32,13 +32,12 @@ export const useAuthStore = defineStore('auth', () => {
   // --- State ---
   // Use ref() for reactive state properties in setup stores
   const userDetails = reactive<UserDetails>({ ...defaultUserDetails }); // Use spread for a clean copy
-
-  const router = useRouter();
   // --- Actions ---
+  const router = useRouter();
   // Define actions as regular functions within the setup scope
   function init() {
     supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth Event:', event, session); // Good for debugging
+      console.log('Auth Event:', event, session);
 
       switch (event) {
         case AuthEvent.INITIAL_SESSION:
@@ -49,6 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
             void router.push('/');
           }
           break;
+
         case AuthEvent.SIGNED_OUT:
           Object.assign(userDetails, defaultUserDetails);
           void router.replace('/auth');
