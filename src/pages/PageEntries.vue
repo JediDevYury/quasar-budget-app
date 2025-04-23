@@ -2,15 +2,34 @@
   <q-page>
     <div class="q-pa-md">
       <q-list bordered separator>
-        <q-item v-for="entry in entries" :key="entry.id">
-          <q-item-section class="text-weight-bold" :class="useAmountColorClass(entry.amount)">
-            {{ entry.name }}
-          </q-item-section>
+        <q-slide-item
+          right-color="negative"
+          left-color="positive"
+          @left="onLeft"
+          @right="onSlideRight($event, entry)"
+          v-for="entry in entries"
+          :key="entry.id"
+        >
+          <template v-slot:left>
+            <q-icon name="done" />
+          </template>
+          <template v-slot:right>
+            <q-icon name="delete" />
+          </template>
+          <q-item>
+            <q-item-section class="text-weight-bold" :class="useAmountColorClass(entry.amount)">
+              {{ entry.name }}
+            </q-item-section>
 
-          <q-item-section class="text-weight-bold" :class="useAmountColorClass(entry.amount)" side>
-            {{ useCurrencify(entry.amount) }}
-          </q-item-section>
-        </q-item>
+            <q-item-section
+              class="text-weight-bold"
+              :class="useAmountColorClass(entry.amount)"
+              side
+            >
+              {{ useCurrencify(entry.amount) }}
+            </q-item-section>
+          </q-item>
+        </q-slide-item>
       </q-list>
     </div>
     <q-footer class="bg-transparent">
@@ -26,7 +45,7 @@
         <div class="col">
           <q-input
             ref="nameRef"
-            v-model="addEntryForm.name"
+            v-model="name"
             bg-color="white"
             placeholder="Name"
             outlined
@@ -35,7 +54,7 @@
         </div>
         <div class="col">
           <q-input
-            v-model.number="addEntryForm.amount"
+            v-model.number="amount"
             input-class="text-right"
             bg-color="white"
             placeholder="Amount"
@@ -54,10 +73,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, toRefs } from 'vue';
 import { useCurrencify } from 'src/use/useCurrencify';
 import { useAmountColorClass } from 'src/use/useAmountColorClass';
-import { uid } from 'quasar';
+import { uid, useQuasar } from 'quasar';
+const $q = useQuasar();
+
+type Entry = {
+  id?: string;
+  name: string;
+  amount: number | null;
+};
 
 const entries = ref<{ id: string; name: string; amount: number }[]>([
   { id: 'id1', name: 'Salary', amount: 4999.99 },
@@ -79,10 +105,10 @@ const defaultAddEntryForm = {
   amount: null,
 };
 
-const addEntryForm = reactive<{
-  name: string;
-  amount: number | null;
-}>({ ...defaultAddEntryForm });
+const addEntryForm = reactive<Entry>({ ...defaultAddEntryForm });
+
+// lesson 4: remember to use toRefs to avoid reactivity issues when destructuring the object
+const { name, amount } = toRefs(addEntryForm);
 
 const clearAddEntryForm = () => {
   Object.assign(addEntryForm, defaultAddEntryForm);
@@ -90,9 +116,56 @@ const clearAddEntryForm = () => {
 };
 
 const addEntry = () => {
-  const newEntry = Object.assign({}, addEntryForm, { id: uid(), amount: addEntryForm.amount ?? 0 });
+  const newEntry = Object.assign({}, addEntryForm, { id: uid(), amount: amount.value ?? 0 });
 
   entries.value.push(newEntry);
   clearAddEntryForm();
 };
+
+const deleteEntry = ({id, name}: Entry) => {
+  const itemIndex = entries.value.findIndex((entry) => entry.id === id);
+
+  entries.value.splice(itemIndex, 1);
+  $q.notify({
+    message: `Item ${name} was successfully deleted`,
+    color: 'positive',
+    icon: 'delete',
+    position: 'top',
+  });
+};
+
+function onLeft() {
+  console.log('onLeft');
+}
+
+function onSlideRight({ reset }: { reset: () => void }, entry: Entry) {
+  $q.dialog({
+    title: 'Delete Entry',
+    message: `
+      Are you sure you want to delete this entry?
+      <div class="q-mt-md text-weight-bold ${useAmountColorClass(entry.amount ?? 0)}">
+        ${entry.name} ${useCurrencify(entry?.amount ?? 0)}
+      <div>
+    `,
+    persistent: true,
+    html: true,
+    ok: {
+      label: 'Delete',
+      color: 'positive',
+      noCaps: true,
+    },
+    cancel: {
+      label: 'Cancel',
+      color: 'negative',
+      noCaps: true,
+    },
+  })
+    .onOk(() => {
+      if (!entry) return;
+      deleteEntry(entry);
+    })
+    .onCancel(() => {
+      reset();
+    });
+}
 </script>
