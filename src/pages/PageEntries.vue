@@ -4,8 +4,6 @@
       <q-list bordered separator>
         <q-slide-item
           right-color="negative"
-          left-color="positive"
-          @left="onLeft"
           @right="onSlideRight($event, entry)"
           v-for="entry in entries"
           :key="entry.id"
@@ -73,39 +71,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, toRefs } from 'vue';
+import { useEntriesStore } from 'src/stores/entries.store';
+import { storeToRefs } from 'pinia';
 import { useCurrencify } from 'src/use/useCurrencify';
 import { useAmountColorClass } from 'src/use/useAmountColorClass';
 import { uid, useQuasar } from 'quasar';
+import type { Entry } from 'src/stores/entries.store';
+import { ref, reactive, toRefs } from 'vue';
+const storeEntries = useEntriesStore();
 const $q = useQuasar();
 
-type Entry = {
-  id?: string;
-  name: string;
-  amount: number | null;
-};
-
-const entries = ref<{ id: string; name: string; amount: number }[]>([
-  { id: 'id1', name: 'Salary', amount: 4999.99 },
-  { id: 'id2', name: 'Rent', amount: -999 },
-  { id: 'id3', name: 'Phone', amount: -14.99 },
-  { id: 'id4', name: 'Unknown', amount: 0 },
-]);
-
-const balance = computed(() => {
-  return entries.value.reduce((acc, { amount }) => acc + amount, 0);
-});
+const { entries, balance } = storeToRefs(storeEntries);
 
 //add entry
 
 const nameRef = ref<HTMLInputElement | null>(null);
 
-const defaultAddEntryForm = {
+const defaultAddEntryForm: Omit<Entry, "id"> = {
   name: '',
-  amount: null,
+  amount: 0,
 };
 
-const addEntryForm = reactive<Entry>({ ...defaultAddEntryForm });
+const addEntryForm = reactive<Omit<Entry, "id">>({ ...defaultAddEntryForm });
 
 // lesson 4: remember to use toRefs to avoid reactivity issues when destructuring the object
 const { name, amount } = toRefs(addEntryForm);
@@ -118,25 +105,9 @@ const clearAddEntryForm = () => {
 const addEntry = () => {
   const newEntry = Object.assign({}, addEntryForm, { id: uid(), amount: amount.value ?? 0 });
 
-  entries.value.push(newEntry);
+  storeEntries.addEntry(newEntry);
   clearAddEntryForm();
 };
-
-const deleteEntry = ({id, name}: Entry) => {
-  const itemIndex = entries.value.findIndex((entry) => entry.id === id);
-
-  entries.value.splice(itemIndex, 1);
-  $q.notify({
-    message: `Item ${name} was successfully deleted`,
-    color: 'positive',
-    icon: 'delete',
-    position: 'top',
-  });
-};
-
-function onLeft() {
-  console.log('onLeft');
-}
 
 function onSlideRight({ reset }: { reset: () => void }, entry: Entry) {
   $q.dialog({
@@ -162,7 +133,7 @@ function onSlideRight({ reset }: { reset: () => void }, entry: Entry) {
   })
     .onOk(() => {
       if (!entry) return;
-      deleteEntry(entry);
+      storeEntries.deleteEntry(entry.id, entry.name);
     })
     .onCancel(() => {
       reset();
