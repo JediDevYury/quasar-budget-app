@@ -15,11 +15,13 @@
     "postinstall": "quasar prepare"
   },
   "dependencies": {
+    "@capacitor/dialog": "^7.0.1",
     "@quasar/extras": "^1.16.4",
     "@supabase/supabase-js": "^2.49.4",
     "@vueuse/core": "^13.1.0",
     "pinia": "^3.0.1",
     "quasar": "^2.16.0",
+    "sortablejs-vue3": "^1.2.11",
     "vue": "^3.4.18",
     "vue-router": "^4.0.12"
   },
