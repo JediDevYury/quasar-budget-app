@@ -2,37 +2,45 @@
   <q-page>
     <div class="q-pa-md">
 
-      <transition
-        appear
-        enter-active-class="animated jackInTheBox slower"
-      >
-        <NothingHere
-          v-if="!storeEntries.entries.length"
-        />
-      </transition>
-
-      <q-list
-        v-if="storeEntries.entries.length"
-        class="entries"
-      >
-
-        <Sortable
-          @end="storeEntries.sortEnd"
-          :list="storeEntries.entries"
-          :options="{ handle: '.handle' }"
-          item-key="id"
-          tag="div"
+      <template v-if="entriesStore.entriesLoaded">
+        <transition
+          appear
+          enter-active-class="animated jackInTheBox slower"
         >
-          <template #item="{element, index}">
-            <TheEntry
-              :key="element.id"
-              :entry="element"
-              :index="index"
-            />
-          </template>
-        </Sortable>
+          <NothingHere
+            v-if="!entriesStore.entries.length"
+          />
+        </transition>
 
-      </q-list>
+        <q-list
+          v-if="entriesStore.entries.length"
+          class="entries"
+        >
+
+          <Sortable
+            @end="entriesStore.sortEnd"
+            :list="entriesStore.entries"
+            :options="{ handle: '.handle' }"
+            item-key="id"
+            tag="div"
+          >
+            <template #item="{element, index}">
+              <TheEntry
+                :key="element.id"
+                :entry="element"
+                :index="index"
+              />
+            </template>
+          </Sortable>
+
+        </q-list>
+      </template>
+
+      <template v-else>
+        <div class="window-height flex flex-center">
+          <q-spinner-gears size="50px" color="primary" />
+        </div>
+      </template>
 
     </div>
 
@@ -44,7 +52,7 @@
         enter-active-class="animated fadeInUp"
         leave-active-class="animated fadeOutDown"
       >
-        <Balance v-if="storeEntries.entries.length" />
+        <Balance v-if="entriesStore.entries.length" />
       </transition>
       <AddEntry />
     </q-footer>
@@ -69,6 +77,6 @@ import { Sortable } from 'sortablejs-vue3'
   stores
 */
 
-const storeEntries = useEntriesStore()
+const entriesStore = useEntriesStore()
 
 </script>

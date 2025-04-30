@@ -55,7 +55,7 @@ const $q = useQuasar();
     stores
   */
 
-const storeEntries = useEntriesStore();
+const entriesStore = useEntriesStore();
 
 /*
     add entry
@@ -82,7 +82,7 @@ const addEntryFormReset = () => {
 
 const addEntryFormSubmit = () => {
 
-  storeEntries.addEntry(addEntryForm);
+  entriesStore.addEntry(addEntryForm);
   addEntryFormReset();
 };
 </script>

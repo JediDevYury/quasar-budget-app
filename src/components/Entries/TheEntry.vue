@@ -81,17 +81,17 @@
         </q-popup-edit>
         <q-chip
           v-if="storeSettings.settings.showRunningBalance"
-          :class="useAmountColorClass(storeEntries.runningBalances[index] ?? 0)"
+          :class="useAmountColorClass(entriesStore.runningBalances[index] ?? 0)"
           class="running-balance absolute-bottom-right"
           size="9px"
           outline
           dense
         >
-          {{ useCurrencify(storeEntries.runningBalances[index] ?? 0) }}
+          {{ useCurrencify(entriesStore.runningBalances[index] ?? 0) }}
         </q-chip>
       </q-item-section>
 
-      <q-item-section v-if="storeEntries.options.sort" side>
+      <q-item-section v-if="entriesStore.options.sort" side>
         <q-icon class="handle" name="reorder" color="primary" />
       </q-item-section>
     </q-item>
@@ -117,7 +117,7 @@ import vAutofocus from 'src/directives/autofocus';
     stores
   */
 
-const storeEntries = useEntriesStore();
+const entriesStore = useEntriesStore();
 const storeSettings = useSettingsStore();
 
 /*
@@ -147,7 +147,7 @@ const $q = useQuasar();
 const onEntrySlideLeft = ({ reset }: {
   reset: () => void;
 }) => {
-  storeEntries.updateEntry(props.entry.id, { paid: !props.entry.paid });
+  entriesStore.updateEntry(props.entry.id, { paid: !props.entry.paid });
   reset();
 };
 
@@ -157,7 +157,7 @@ const onEntrySlideRight = async ({ reset }: {
   if (storeSettings.settings.promptToDelete) {
     await promptToDelete(reset);
   }
-  else storeEntries.deleteEntry(props.entry.id);
+  else entriesStore.deleteEntry(props.entry.id);
 };
 
 // Delete Entry
@@ -176,7 +176,7 @@ const promptToDelete = async (reset: () => void) => {
       message,
       okButtonTitle,
     });
-    if (value) storeEntries.deleteEntry(props.entry.id);
+    if (value) entriesStore.deleteEntry(props.entry.id);
     else reset();
   } else {
     $q.dialog({
@@ -195,7 +195,7 @@ const promptToDelete = async (reset: () => void) => {
       },
     })
       .onOk(() => {
-        storeEntries.deleteEntry(props.entry.id);
+        entriesStore.deleteEntry(props.entry.id);
       })
       .onCancel(() => {
         reset();
@@ -208,10 +208,10 @@ const promptToDelete = async (reset: () => void) => {
   */
 
 const onNameUpdate = (value: string) => {
-  storeEntries.updateEntry(props.entry.id, { name: value });
+  entriesStore.updateEntry(props.entry.id, { name: value });
 };
 
 const onAmountUpdate = (value: number) => {
-  storeEntries.updateEntry(props.entry.id, { amount: value });
+  entriesStore.updateEntry(props.entry.id, { amount: value });
 };
 </script>

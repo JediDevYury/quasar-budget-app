@@ -1,12 +1,10 @@
 import { Dialog } from 'quasar';
 
 export function useShowErrorMessage() {
-  const showErrorMessage = (message: string) => {
+  return (message: string, tag: string) => {
     Dialog.create({
-      title: 'Error',
+      title: tag ? 'Fetching ' + tag + ' failed' : 'Something went wrong!',
       message,
     });
   };
-
-  return { showErrorMessage };
 }

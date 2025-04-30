@@ -5,8 +5,14 @@
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <ToolbarTitle />
-
-        <div>Quasar v{{ $q.version }}</div>
+        <q-btn
+          v-if="$route.fullPath === '/'"
+          @click="entriesStore.options.sort = !entriesStore.options.sort"
+          :label="!entriesStore.options.sort ? 'Sort' : 'Done'"
+          flat
+          no-caps
+          dense
+        />
       </q-toolbar>
     </q-header>
 
@@ -49,8 +55,10 @@ import { ref } from 'vue';
 import NavLink, { type NavLinkProps } from 'components/Nav/NavLink.vue';
 import ToolbarTitle from 'components/Layout/ToolbarTitle.vue';
 import { useAuthStore } from 'stores/auth-store';
+import { useEntriesStore} from 'stores/entries-store';
 
 const authStore = useAuthStore();
+const entriesStore = useEntriesStore();
 
 const navLinks: NavLinkProps[] = [
   {

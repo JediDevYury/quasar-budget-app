@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed, reactive, watch, nextTick } from 'vue'
-import { uid, Notify, LocalStorage } from 'quasar'
+import { ref, computed, reactive, nextTick } from 'vue'
+import { uid, Notify } from 'quasar'
+import supabase from 'src/config/supabase';
+import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
+import { REALTIME_POSTGRES_CHANGES_LISTEN_EVENT } from '@supabase/supabase-js'
 
 interface Entry {
   id: string;
@@ -19,15 +22,11 @@ export const useEntriesStore = defineStore('entries', () => {
   /*
     state
   */
-
+  const showErrorMessage = useShowErrorMessage()
   const entries = ref<Entry[]>([]);
+  const entriesLoaded = ref(false);
   const options = reactive({
     sort: false
-  })
-
-
-  watch(entries.value, () => {
-    saveEntries()
   })
 
   /*
@@ -100,12 +99,55 @@ export const useEntriesStore = defineStore('entries', () => {
   }
 
   const saveEntries = () => {
-    LocalStorage.set('entries', entries.value)
+    console.log("save entries");
   }
 
-  const loadEntries = () => {
-    const savedEntries = LocalStorage.getItem('entries')
-    if (savedEntries) Object.assign(entries.value, savedEntries)
+  const subscribeToEntries = () => {
+    supabase.channel('entries-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'entries' },
+        (payload) => {
+          switch (payload.eventType) {
+            case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.INSERT: {
+              entries.value.push(payload.new as Entry)
+              break;
+            }
+            case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.DELETE: {
+              const index = getEntryIndexById(payload.old.id)
+
+              entries.value.splice(index, 1)
+              break;
+            }
+
+            case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.UPDATE: {
+              const index = getEntryIndexById(payload.new.id)
+
+              if(entries.value[index]) {
+                Object.assign(entries.value[index], payload.new)
+              }
+              break
+            }
+
+            default: return
+          }
+        }
+      )
+      .subscribe()
+  }
+
+  const loadEntries = async () => {
+    const {data, error} = await supabase
+      .from('entries')
+      .select('*')
+    if(data) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      entriesLoaded.value = true
+      entries.value = data
+      subscribeToEntries()
+    }
+    if(error) showErrorMessage(error.message, "entities")
+    return data;
   }
 
   /*
@@ -131,6 +173,7 @@ export const useEntriesStore = defineStore('entries', () => {
     // state
     entries,
     options,
+    entriesLoaded,
 
     // getters
     balance,

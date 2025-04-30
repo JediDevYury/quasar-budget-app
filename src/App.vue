@@ -13,9 +13,9 @@ const authStore = useAuthStore();
 const entriesStore = useEntriesStore();
 const storeSettings = useSettingsStore();
 
-onMounted(() => {
+onMounted(async () => {
   authStore.init();
-  entriesStore.loadEntries();
+  await entriesStore.loadEntries();
   storeSettings.loadSettings()
 });
 

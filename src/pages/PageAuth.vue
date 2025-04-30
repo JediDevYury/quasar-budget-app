@@ -1,6 +1,6 @@
 <template>
-  <q-page class="flex justify-center items-center">
-    <q-card class="auth bg-primary text-white q-pa-lg">
+  <q-page class="flex flex-center">
+    <q-card class="bg-primary text-white q-pa-md card">
       <q-card-section>
         <ToolbarTitle />
       </q-card-section>
@@ -88,3 +88,9 @@ const handleSubmit = async () => {
   }
 };
 </script>
+
+<style scoped>
+.card {
+  min-width: 300px;
+}
+</style>

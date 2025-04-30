@@ -20,7 +20,7 @@ export enum AuthEvent {
 }
 
 // Keep the composable usage (can be inside or outside the defineStore scope)
-const { showErrorMessage } = useShowErrorMessage();
+const showErrorMessage = useShowErrorMessage();
 
 // Define the default state structure clearly
 const defaultUserDetails: UserDetails = {
@@ -65,7 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     if (error) {
-      showErrorMessage(error.message);
+      showErrorMessage(error.message, 'register');
       throw error; // Re-throw the error so the caller can handle it if needed
     }
 
@@ -78,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      showErrorMessage(error.message);
+      showErrorMessage(error.message, 'logout');
       throw error;
     }
     // The 'SIGNED_OUT' event from onAuthStateChange should update the state
@@ -92,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
     });
 
     if (error) {
-      showErrorMessage(error.message);
+      showErrorMessage(error.message, 'login');
       throw error;
     }
 
