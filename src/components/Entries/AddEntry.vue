@@ -80,9 +80,8 @@ const addEntryFormReset = () => {
   }
 };
 
-const addEntryFormSubmit = () => {
-
-  entriesStore.addEntry(addEntryForm);
+const addEntryFormSubmit = async () => {
+  await entriesStore.addEntry(addEntryForm);
   addEntryFormReset();
 };
 </script>

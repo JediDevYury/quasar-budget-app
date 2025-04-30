@@ -1,47 +1,44 @@
 <template>
   <q-page>
     <div class="q-pa-md">
-
-      <template v-if="entriesStore.entriesLoaded">
         <transition
           appear
           enter-active-class="animated jackInTheBox slower"
         >
           <NothingHere
-            v-if="!entriesStore.entries.length"
+            v-if="entriesStore.entriesLoaded && !entriesStore.entries.length"
           />
         </transition>
 
-        <q-list
-          v-if="entriesStore.entries.length"
-          class="entries"
-        >
-
-          <Sortable
-            @end="entriesStore.sortEnd"
-            :list="entriesStore.entries"
-            :options="{ handle: '.handle' }"
-            item-key="id"
-            tag="div"
+        <template v-if="entriesStore.entriesLoaded">
+          <q-list
+            v-if="entriesStore.entries.length"
+            class="entries"
           >
-            <template #item="{element, index}">
-              <TheEntry
-                :key="element.id"
-                :entry="element"
-                :index="index"
-              />
-            </template>
-          </Sortable>
 
-        </q-list>
-      </template>
+            <Sortable
+              @end="entriesStore.sortEnd"
+              :list="entriesStore.entries"
+              :options="{ handle: '.handle' }"
+              item-key="id"
+              tag="div"
+            >
+              <template #item="{element, index}">
+                <TheEntry
+                  :key="element.id"
+                  :entry="element"
+                  :index="index"
+                />
+              </template>
+            </Sortable>
 
-      <template v-else>
-        <div class="window-height flex flex-center">
-          <q-spinner-gears size="50px" color="primary" />
-        </div>
-      </template>
-
+          </q-list>
+        </template>
+        <template v-else>
+          <div class="window-height flex flex-center">
+            <q-spinner-gears size="50px" color="primary" />
+          </div>
+        </template>
     </div>
 
     <q-footer

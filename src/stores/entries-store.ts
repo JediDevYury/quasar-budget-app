@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref, computed, reactive, nextTick } from 'vue'
-import { uid, Notify } from 'quasar'
+import { ref, computed, reactive, nextTick, toValue } from 'vue';
+import { Notify } from 'quasar'
 import supabase from 'src/config/supabase';
 import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
 import { REALTIME_POSTGRES_CHANGES_LISTEN_EVENT } from '@supabase/supabase-js'
+import type {Database} from 'app/database.types';
 
 interface Entry {
   id: string;
@@ -64,26 +65,68 @@ export const useEntriesStore = defineStore('entries', () => {
     actions
   */
 
-  const addEntry = (addEntryForm: AddEntryForm) => {
-    const newEntry = Object.assign({}, addEntryForm, { id: uid(), paid: false })
+  const addEntry = async (addEntryForm: AddEntryForm) => {
+    const newEntry = Object.assign({}, addEntryForm, { paid: false })
     if (newEntry.amount === null) newEntry.amount = 0
-    entries.value.push(newEntry as Entry)
-  }
+    const { error } = await supabase
+      .from('entries')
+      .insert([
+        newEntry as Database['public']['Tables']['entries']['Row']
+      ])
+      .select()
 
-  const deleteEntry = (entryId: string) => {
-    const index = getEntryIndexById(entryId)
-    entries.value.splice(index, 1)
-    removeSlideItemIfExists(entryId)
+    if(error) {
+      showErrorMessage(error.message, "addEntry")
+      return
+    }
+
     Notify.create({
-      message: 'Entry deleted',
-      position: 'top'
+      message: 'Entries successfully added',
+      position: 'top',
+      color: 'positive'
     })
   }
 
-  const updateEntry = (entryId: string, updates: Partial<Entry>) => {
+  const deleteEntry = async (entryId: string) => {
+    const { error } = await supabase
+      .from('entries')
+      .delete()
+      .eq('id', entryId)
+
+    if(error) {
+      showErrorMessage(error.message, "deleteEntry")
+      return
+    }
+    removeSlideItemIfExists(entryId)
+    Notify.create({
+      message: 'Entries successfully deleted',
+      position: 'top',
+      color: 'positive'
+    })
+  }
+
+  const updateEntry = async (entryId: string, updates: Partial<Entry>) => {
     const index = getEntryIndexById(entryId)
-    const entry = entries.value[index] ?? {};
-    Object.assign(entry, updates);
+    const oldEntry = toValue(entries.value[index])
+    Object.assign(entries.value[index] as Entry, updates)
+
+    const { error } = await supabase
+      .from('entries')
+      .update(updates)
+      .eq('id', entryId)
+      .select()
+
+    if(error) {
+      showErrorMessage(error.message, "updateEntry")
+      Object.assign(entries.value[index] as Entry, oldEntry)
+      return
+    }
+
+    Notify.create({
+      message: 'Entries successfully updated',
+      position: 'top',
+      color: 'positive'
+    })
   }
 
   const sortEnd = ({ oldIndex, newIndex }: {
