@@ -147,7 +147,8 @@ export const useEntriesStore = defineStore('entries', () => {
     return {
       name,
       id,
-      order
+      order,
+      user_id: authStore.getUserId(),
     }
   })
 
