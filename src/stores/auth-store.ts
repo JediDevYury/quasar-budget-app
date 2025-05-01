@@ -3,6 +3,8 @@ import { reactive } from 'vue'; // Import ref for reactive state
 import supabase from 'src/config/supabase';
 import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
 import { useRouter } from 'vue-router';
+import {useEntriesStore} from 'stores/entries-store';
+
 // Interfaces remain the same
 export interface User {
   email: string;
@@ -34,11 +36,10 @@ export const useAuthStore = defineStore('auth', () => {
   const userDetails = reactive<UserDetails>({ ...defaultUserDetails }); // Use spread for a clean copy
   // --- Actions ---
   const router = useRouter();
+  const { loadEntries, clearEntries, unsubscribeFromEntries } = useEntriesStore();
   // Define actions as regular functions within the setup scope
   function init() {
     supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth Event:', event, session);
-
       switch (event) {
         case AuthEvent.INITIAL_SESSION:
         case AuthEvent.SIGNED_IN:
@@ -46,12 +47,16 @@ export const useAuthStore = defineStore('auth', () => {
             userDetails.id = session.user.id;
             userDetails.email = session.user.email ?? null;
             void router.push('/');
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            loadEntries();
           }
           break;
 
         case AuthEvent.SIGNED_OUT:
           Object.assign(userDetails, defaultUserDetails);
           void router.replace('/auth');
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          unsubscribeFromEntries()
           break;
       }
     });
@@ -80,6 +85,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) {
       showErrorMessage(error.message, 'logout');
       throw error;
+    } else {
+      clearEntries()
     }
     // The 'SIGNED_OUT' event from onAuthStateChange should update the state
   }
@@ -100,6 +107,13 @@ export const useAuthStore = defineStore('auth', () => {
     return data;
   }
 
+  //getters
+  const getUserId = () => {
+    console.log(
+      'userDetails.id', userDetails.id, 'userDetails.email', userDetails.email);
+    return userDetails.id ?? '';
+  }
+
   // --- Return Exposed State and Actions ---
   // Return the state refs and action functions you want to use outside the store
   return {
@@ -111,5 +125,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     login,
+    // Getters
+    getUserId,
   };
 });

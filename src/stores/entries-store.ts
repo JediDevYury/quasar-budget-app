@@ -3,14 +3,19 @@ import { ref, computed, reactive, nextTick, toValue } from 'vue';
 import { Notify } from 'quasar'
 import supabase from 'src/config/supabase';
 import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
-import { REALTIME_POSTGRES_CHANGES_LISTEN_EVENT } from '@supabase/supabase-js'
+import { REALTIME_POSTGRES_CHANGES_LISTEN_EVENT, type RealtimeChannel } from '@supabase/supabase-js'
 import type {Database} from 'app/database.types';
+import { useAuthStore } from 'stores/auth-store';
 
-interface Entry {
+const USER_MUST_LOG_IN_MESSAGE = "You must be logged in to add entries"
+let realtimeEntriesChannel: RealtimeChannel;
+
+export interface Entry {
   id: string;
   name: string;
   amount: number;
   paid: boolean;
+  order: number;
 }
 
 export interface AddEntryForm {
@@ -24,6 +29,7 @@ export const useEntriesStore = defineStore('entries', () => {
     state
   */
   const showErrorMessage = useShowErrorMessage()
+  const authStore = useAuthStore()
   const entries = ref<Entry[]>([]);
   const entriesLoaded = ref(false);
   const options = reactive({
@@ -66,8 +72,16 @@ export const useEntriesStore = defineStore('entries', () => {
   */
 
   const addEntry = async (addEntryForm: AddEntryForm) => {
-    const newEntry = Object.assign({}, addEntryForm, { paid: false })
+    if(!authStore.getUserId()) {
+      showErrorMessage(USER_MUST_LOG_IN_MESSAGE, "addEntry")
+      return
+    }
+
+    const newEntry = Object.assign({}, addEntryForm,
+      { paid: false, order: generateOrderNumber(), user_id: authStore.getUserId() }
+    )
     if (newEntry.amount === null) newEntry.amount = 0
+
     const { error } = await supabase
       .from('entries')
       .insert([
@@ -129,27 +143,63 @@ export const useEntriesStore = defineStore('entries', () => {
     })
   }
 
-  const sortEnd = ({ oldIndex, newIndex }: {
+  const getUpsertEntries = () => entries.value.map(({id, order, name}) => {
+    return {
+      name,
+      id,
+      order
+    }
+  })
+
+  const updateEntryOrderNumbers = async () => {
+    let currentOrder: number = 1
+    for (const entry of entries.value) {
+      entry.order = currentOrder
+      currentOrder++
+    }
+
+    const entriesUpsert = getUpsertEntries()
+
+    const {error} = await supabase.from('entries').upsert(entriesUpsert).select()
+
+    if(error) {
+      showErrorMessage(error.message, "entriesUpsert")
+    }
+  }
+
+  const sortEnd = async ({ oldIndex, newIndex }: {
     oldIndex: number;
     newIndex: number;
   }) => {
+    console.log('Sort end: ', oldIndex, newIndex, '');
     const movedEntry = entries.value[oldIndex]
     entries.value.splice(oldIndex, 1)
 
     if(movedEntry) {
       entries.value.splice(newIndex, 0, movedEntry)
     }
+
+    await updateEntryOrderNumbers()
   }
 
   const saveEntries = () => {
     console.log("save entries");
   }
 
+  const unsubscribeFromEntries = async () => {
+    await supabase.removeChannel(realtimeEntriesChannel)
+  }
+
   const subscribeToEntries = () => {
-    supabase.channel('entries-channel')
+    realtimeEntriesChannel = supabase.channel('entries-channel')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'entries' },
+        {
+          event: '*',
+          schema: 'public',
+          table: 'entries',
+          filter: `user_id=eq.${authStore.getUserId()}`
+        },
         (payload) => {
           switch (payload.eventType) {
             case REALTIME_POSTGRES_CHANGES_LISTEN_EVENT.INSERT: {
@@ -180,9 +230,19 @@ export const useEntriesStore = defineStore('entries', () => {
   }
 
   const loadEntries = async () => {
+    if(!authStore.getUserId()) {
+      showErrorMessage(USER_MUST_LOG_IN_MESSAGE, "loadEntries")
+      return
+    }
+
     const {data, error} = await supabase
       .from('entries')
       .select('*')
+      .eq('user_id', authStore.getUserId())
+      .order('order', {
+        ascending: true,
+      })
+
     if(data) {
       await new Promise(resolve => setTimeout(resolve, 2000))
       entriesLoaded.value = true
@@ -192,6 +252,13 @@ export const useEntriesStore = defineStore('entries', () => {
     if(error) showErrorMessage(error.message, "entities")
     return data;
   }
+
+  const clearEntries = () => {
+    entries.value = []
+    entriesLoaded.value = false
+  }
+
+
 
   /*
     helpers
@@ -207,6 +274,10 @@ export const useEntriesStore = defineStore('entries', () => {
       if (slideItem) slideItem.remove();
     });
   };
+
+  const generateOrderNumber = () => {
+    return entries.value.reduce((max, entry) => (Math.max(entry.order, max)), 0) + 1
+  }
 
   /*
     return
@@ -230,7 +301,7 @@ export const useEntriesStore = defineStore('entries', () => {
     loadEntries,
     sortEnd,
     saveEntries,
+    clearEntries,
+    unsubscribeFromEntries
   };
 });
-
-export type { Entry };

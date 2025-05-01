@@ -112,6 +112,7 @@ import { useAmountColorClass } from 'src/use/useAmountColorClass';
 import { useLightOrDark } from 'src/use/useLightOrDark';
 import vSelectAll from 'src/directives/selectAll';
 import vAutofocus from 'src/directives/autofocus';
+import type {Entry} from 'stores/entries-store';
 
 /*
     stores
@@ -125,12 +126,7 @@ const storeSettings = useSettingsStore();
   */
 
 const props = defineProps<{
-  entry: {
-    id: string;
-    name: string;
-    amount: number;
-    paid: boolean;
-  },
+  entry: Entry,
   index: number;
 }>();
 
@@ -144,10 +140,10 @@ const $q = useQuasar();
     slide items
   */
 
-const onEntrySlideLeft = ({ reset }: {
+const onEntrySlideLeft = async ({ reset }: {
   reset: () => void;
 }) => {
-  entriesStore.updateEntry(props.entry.id, { paid: !props.entry.paid });
+  await entriesStore.updateEntry(props.entry.id, { paid: !props.entry.paid });
   reset();
 };
 
@@ -157,7 +153,9 @@ const onEntrySlideRight = async ({ reset }: {
   if (storeSettings.settings.promptToDelete) {
     await promptToDelete(reset);
   }
-  else entriesStore.deleteEntry(props.entry.id);
+  else {
+    await entriesStore.deleteEntry(props.entry.id);
+  }
 };
 
 // Delete Entry
@@ -176,7 +174,9 @@ const promptToDelete = async (reset: () => void) => {
       message,
       okButtonTitle,
     });
-    if (value) entriesStore.deleteEntry(props.entry.id);
+    if (value) {
+      await entriesStore.deleteEntry(props.entry.id);
+    }
     else reset();
   } else {
     $q.dialog({
@@ -194,7 +194,8 @@ const promptToDelete = async (reset: () => void) => {
         noCaps: true,
       },
     })
-      .onOk(() => {
+      .onOk( () => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         entriesStore.deleteEntry(props.entry.id);
       })
       .onCancel(() => {
@@ -207,11 +208,11 @@ const promptToDelete = async (reset: () => void) => {
     name & amount update
   */
 
-const onNameUpdate = (value: string) => {
-  entriesStore.updateEntry(props.entry.id, { name: value });
+const onNameUpdate = async (value: string) => {
+  await entriesStore.updateEntry(props.entry.id, { name: value });
 };
 
-const onAmountUpdate = (value: number) => {
-  entriesStore.updateEntry(props.entry.id, { amount: value });
+const onAmountUpdate = async (value: number) => {
+  await entriesStore.updateEntry(props.entry.id, { amount: value });
 };
 </script>

@@ -15,21 +15,27 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          order: number
           paid: boolean
+          user_id: string
         }
         Insert: {
           amount?: number
           created_at?: string
           id?: string
           name: string
+          order?: number
           paid?: boolean
+          user_id?: string
         }
         Update: {
           amount?: number
           created_at?: string
           id?: string
           name?: string
+          order?: number
           paid?: boolean
+          user_id?: string
         }
         Relationships: []
       }
