@@ -71,6 +71,21 @@ export const useEntriesStore = defineStore('entries', () => {
     actions
   */
 
+  // const updateEntriesCount = async () => {
+  //   const { error } = await supabase.rpc('increment_entries')
+  //
+  //   if(error) {
+  //     showErrorMessage(error.message, "updateEntriesCount")
+  //     return
+  //   }
+  //
+  //   Notify.create({
+  //     message: 'Entries count successfully updated',
+  //     position: 'top',
+  //     color: 'positive'
+  //   })
+  // }
+
   const addEntry = async (addEntryForm: AddEntryForm) => {
     if(!authStore.getUserId()) {
       showErrorMessage(USER_MUST_LOG_IN_MESSAGE, "addEntry")
