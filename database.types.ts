@@ -26,7 +26,7 @@ export type Database = {
           name: string
           order?: number
           paid?: boolean
-          user_id?: string
+          user_id: string
         }
         Update: {
           amount?: number
@@ -36,6 +36,27 @@ export type Database = {
           order?: number
           paid?: boolean
           user_id?: string
+        }
+        Relationships: []
+      }
+      stats: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          value?: number
         }
         Relationships: []
       }
