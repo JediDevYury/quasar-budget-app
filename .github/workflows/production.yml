@@ -10,7 +10,8 @@ on:
         description: 'Reason for manual deployment'
         required: true
         default: 'Manual deployment'
-
+permissions:
+  contents: write
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
