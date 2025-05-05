@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
-import { reactive, watch } from 'vue';
+import { reactive, watch, ref } from 'vue';
 import { Dark, LocalStorage } from 'quasar';
+import supabase from 'src/config/supabase';
+import { useAuthStore } from 'stores/auth-store';
+import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
 
 export const useSettingsStore = defineStore('settings', () => {
   /*
@@ -13,6 +16,12 @@ export const useSettingsStore = defineStore('settings', () => {
     currencySymbol: '$',
     darkMode: false, // false | true | 'auto'
   });
+
+  const avatarUrl = ref<string | null>(null)
+  const avatarFile = ref<File | null>(null)
+
+  const authStore = useAuthStore()
+  const showErrorMessage = useShowErrorMessage()
 
   // watch darkMode
   watch(
@@ -32,6 +41,28 @@ export const useSettingsStore = defineStore('settings', () => {
     getters
   */
 
+  const getAvatarUrl = async () => {
+    const {data: profiles, error} = await supabase.from('profiles')
+      .select('*')
+      .eq('id', authStore.getUserId())
+
+    if(error) {
+      showErrorMessage(error.message, "getAvatarUrl")
+      return;
+    }
+
+    if(profiles?.length && profiles[0]?.avatar_filename) {
+      const avatarFilename = profiles[0].avatar_filename
+      const path = `${authStore.getUserId()}/${avatarFilename}`
+      const { data } = supabase
+        .storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      avatarUrl.value = data.publicUrl
+    }
+
+  }
   /*
     actions
   */
@@ -45,6 +76,40 @@ export const useSettingsStore = defineStore('settings', () => {
     if (savedSettings) Object.assign(settings, savedSettings);
   };
 
+  const saveAvatarFilename = async (filename: string) => {
+    const {error} = await supabase.from('profiles').upsert({
+      id: authStore.getUserId(),
+      avatar_filename: filename
+    }).select()
+
+    if(error) {
+      showErrorMessage(error.message, "saveAvatarFilename")
+      return
+    }
+
+    await getAvatarUrl()
+  }
+
+  const uploadAvatar = async (file: File) => {
+    const folderPath = `${authStore.getUserId()}/${Date.now()}_${file.name}`
+    const {data, error} = await supabase.storage.from('avatars')
+      .upload(folderPath, file)
+    if(error) {
+      showErrorMessage(error.message, "uploadAvatar")
+      return
+    }
+    if(data) {
+      const avatarFilename = data.fullPath.split('/').pop()
+      if(!avatarFilename) return
+      await saveAvatarFilename(avatarFilename)
+    }
+  }
+
+  const resetProfile = () => {
+    avatarUrl.value = null
+    avatarFile.value = null
+  }
+
   /*
     return
   */
@@ -52,10 +117,15 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     // state
     settings,
+    avatarUrl,
+    avatarFile,
 
     // getters
 
     // actions
+    resetProfile,
+    getAvatarUrl,
+    uploadAvatar,
     loadSettings,
   };
 });

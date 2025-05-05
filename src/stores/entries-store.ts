@@ -187,7 +187,6 @@ export const useEntriesStore = defineStore('entries', () => {
     oldIndex: number;
     newIndex: number;
   }) => {
-    console.log('Sort end: ', oldIndex, newIndex, '');
     const movedEntry = entries.value[oldIndex]
     entries.value.splice(oldIndex, 1)
 
@@ -196,10 +195,6 @@ export const useEntriesStore = defineStore('entries', () => {
     }
 
     await updateEntryOrderNumbers()
-  }
-
-  const saveEntries = () => {
-    console.log("save entries");
   }
 
   const unsubscribeFromEntries = async () => {
@@ -316,7 +311,6 @@ export const useEntriesStore = defineStore('entries', () => {
     updateEntry,
     loadEntries,
     sortEnd,
-    saveEntries,
     clearEntries,
     unsubscribeFromEntries
   };

@@ -32,7 +32,10 @@
 
         <q-item to="/auth" @click="authStore.logout()" clickable class="text-white" tag="a">
           <q-item-section avatar>
-            <q-icon name="logout" />
+            <q-avatar v-if="settingsStore.avatarUrl" size="32px">
+              <img :src="settingsStore.avatarUrl" alt="Avatar">
+            </q-avatar>
+            <q-icon v-else name="logout" />
           </q-item-section>
           <q-item-section>
             <q-item-label>Log out</q-item-label>
@@ -56,9 +59,11 @@ import NavLink, { type NavLinkProps } from 'components/Nav/NavLink.vue';
 import ToolbarTitle from 'components/Layout/ToolbarTitle.vue';
 import { useAuthStore } from 'stores/auth-store';
 import { useEntriesStore} from 'stores/entries-store';
+import { useSettingsStore } from 'stores/settings-store';
 
 const authStore = useAuthStore();
 const entriesStore = useEntriesStore();
+const settingsStore = useSettingsStore();
 
 const navLinks: NavLinkProps[] = [
   {

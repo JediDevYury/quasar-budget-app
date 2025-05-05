@@ -3,7 +3,8 @@ import { reactive } from 'vue'; // Import ref for reactive state
 import supabase from 'src/config/supabase';
 import { useShowErrorMessage } from 'src/use/useShowErrorMessage';
 import { useRouter } from 'vue-router';
-import {useEntriesStore} from 'stores/entries-store';
+import { useEntriesStore } from 'stores/entries-store';
+import { useSettingsStore } from 'stores/settings-store';
 
 // Interfaces remain the same
 export interface User {
@@ -36,6 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userDetails = reactive<UserDetails>({ ...defaultUserDetails }); // Use spread for a clean copy
   // --- Actions ---
   const router = useRouter();
+  const { getAvatarUrl, resetProfile } = useSettingsStore();
   const { loadEntries, clearEntries, unsubscribeFromEntries } = useEntriesStore();
   // Define actions as regular functions within the setup scope
   function init() {
@@ -48,12 +50,15 @@ export const useAuthStore = defineStore('auth', () => {
             userDetails.email = session.user.email ?? null;
             void router.push('/');
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            getAvatarUrl()
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             loadEntries();
           }
           break;
 
         case AuthEvent.SIGNED_OUT:
           Object.assign(userDetails, defaultUserDetails);
+          resetProfile()
           void router.replace('/auth');
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           unsubscribeFromEntries()
