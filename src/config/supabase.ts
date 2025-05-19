@@ -1,13 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from 'app/database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const config = {
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+  supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+};
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!config.supabaseUrl || !config.supabaseAnonKey) {
   console.error('Missing environment variables:', {
-    supabaseUrl,
-    supabaseAnonKey,
+    ...config,
     env: import.meta.env,
   });
   throw new Error(
@@ -15,6 +16,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+const supabase = createClient<Database>(config.supabaseUrl, config.supabaseAnonKey);
 
 export default supabase;
